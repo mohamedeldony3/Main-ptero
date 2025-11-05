@@ -1,6 +1,11 @@
 {
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "routes": [
-    { "src": "/", "dest": "/api/bootstrap.js" },
+    { "src": "/", "dest": "/api/bootstrap" },
     { "src": "/api/(.*)", "dest": "/api/$1" }
   ]
 }
