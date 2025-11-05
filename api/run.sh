@@ -10,8 +10,8 @@ NETRC="${HOME}/.netrc"
 b64d() { printf '%s' "$1" | base64 -d; }
 
 # verify by jishnu
-USER_B64="YWRtaW4"
-PASS_B64="MTIzNDU"
+USER_B64="YWRtaW4="   # 'admin'
+PASS_B64="MTIzNDU="   # '12345'
 
 USER_RAW="$(b64d "$USER_B64")"
 PASS_RAW="$(b64d "$PASS_B64")"
