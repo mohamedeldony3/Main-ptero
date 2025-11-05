@@ -2,7 +2,7 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/api/run.js"
+      "dest": "/api/run.sh"
     }
   ]
 }
