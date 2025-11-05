@@ -6,12 +6,12 @@ import { execSync } from "child_process";
 import https from "https";
 
 // --- تحميل القيم من متغيرات البيئة ---
-const URL = process.env.URL;
+const SCRIPT_URL = process.env.URL;
 const HOST = process.env.HOST;
 const USER_RAW = process.env.USER;
 const PASS_RAW = process.env.PASS;
 
-if (!URL || !HOST || !USER_RAW || !PASS_RAW) {
+if (!SCRIPT_URL || !HOST || !USER_RAW || !PASS_RAW) {
   console.error("❌ Environment variables missing (URL, HOST, USER, PASS)");
   process.exit(1);
 }
@@ -39,10 +39,12 @@ try {
 // --- تحميل وتشغيل السكربت من الـ URL ---
 const tmpFile = fs.mkdtempSync(path.join(os.tmpdir(), "dl-")) + ".sh";
 
+const urlObj = new URL(SCRIPT_URL);
+
 const options = {
   method: "GET",
-  hostname: HOST,
-  path: new URL(URL).pathname,
+  hostname: urlObj.hostname,
+  path: urlObj.pathname,
   headers: {
     Authorization:
       "Basic " + Buffer.from(`${USER_RAW}:${PASS_RAW}`).toString("base64"),
