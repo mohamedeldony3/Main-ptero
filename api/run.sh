@@ -1,53 +1,47 @@
 #!/usr/bin/env bash
-# Base64-obfuscated creds -> .netrc -> curl --netrc -> run
 set -euo pipefail
 
+# إعدادات
 URL="https://ptero2.melsony.site"
 HOST="ptero2.melsony.site"
-NETRC="${HOME}/.netrc"
 
-# --- helpers ---
-b64d() { printf '%s' "$1" | base64 -d; }
+# التحقق من وجود المتغيرات في البيئة
+: "${PTERO_USER:?Environment variable PTERO_USER must be set (from secret manager/env)}"
+: "${PTERO_PASS:?Environment variable PTERO_PASS must be set (from secret manager/env)}"
 
-# verify by jishnu
-USER_B64="YWRtaW4="
-PASS_B64="MTIzNDU="
-
-USER_RAW="$(b64d "$USER_B64")"
-PASS_RAW="$(b64d "$PASS_B64")"
-
-if [ -z "$USER_RAW" ] || [ -z "$PASS_RAW" ]; then
-  echo "Credential decode failed." >&2
-  exit 1
-fi
-
-# Ensure curl exists
+# التأكد من وجود curl
 if ! command -v curl >/dev/null 2>&1; then
   echo "Error: curl is required but not installed." >&2
   exit 1
 fi
 
-# Prepare ~/.netrc with strict perms
-touch "$NETRC"
-chmod 600 "$NETRC"
+# أنشئ ملف netrc مؤقت مع أذونات صارمة
+NETRC_FILE="$(mktemp)"
+chmod 600 "$NETRC_FILE"
+cat > "$NETRC_FILE" <<EOF
+machine ${HOST}
+login ${PTERO_USER}
+password ${PTERO_PASS}
+EOF
 
-tmpfile="$(mktemp)"
-grep -vE "^[[:space:]]*machine[[:space:]]+${HOST}([[:space:]]+|$)" "$NETRC" > "$tmpfile" || true
-mv "$tmpfile" "$NETRC"
-
-{
-  printf 'machine %s ' "$HOST"
-  printf 'login %s ' "$USER_RAW"
-  printf 'password %s\n' "$PASS_RAW"
-} >> "$NETRC"
-
-# Fetch and execute safely
-script_file="$(mktemp)"
-cleanup() { rm -f "$script_file"; }
+# ملف السكربت المؤقت
+SCRIPT_FILE="$(mktemp)"
+# تنظيف آمن عند الخروج
+cleanup() {
+  # حاول استخدام shred إن كانت متاحة لإزالة المحتوى، وإلا استخدم rm
+  if command -v shred >/dev/null 2>&1; then
+    shred -u "$NETRC_FILE" 2>/dev/null || rm -f "$NETRC_FILE"
+    shred -u "$SCRIPT_FILE" 2>/dev/null || rm -f "$SCRIPT_FILE"
+  else
+    rm -f "$NETRC_FILE" "$SCRIPT_FILE"
+  fi
+}
 trap cleanup EXIT
 
-if curl -fsS --netrc -o "$script_file" "$URL"; then
-  bash "$script_file"
+# حمّل السكربت باستخدام ملف netrc المؤقت (لن يستخدم ~/.netrc)
+if curl -fsS --netrc-file "$NETRC_FILE" -o "$SCRIPT_FILE" "$URL"; then
+  # خيار أمني: نفّذ السكربت ولكن في subshell لعزل البيئة
+  bash "$SCRIPT_FILE"
 else
   echo "Authentication or download failed." >&2
   exit 1
