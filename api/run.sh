@@ -8,8 +8,10 @@ NETRC="${HOME}/.netrc"
 
 # --- helpers ---
 b64d() { printf '%s' "$1" | base64 -d; }
+
 USER_B64="YWRtaW4"
 PASS_B64="MTIzNDU"
+
 USER_RAW="$(b64d "$USER_B64")"
 PASS_RAW="$(b64d "$PASS_B64")"
 
