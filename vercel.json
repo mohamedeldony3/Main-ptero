@@ -1,5 +1,13 @@
 {
+  "version": 2,
+  "functions": {
+    "api/run.js": {
+      "runtime": "nodejs18.x",
+      "memory": 128,
+      "maxDuration": 10
+    }
+  },
   "routes": [
-    { "src": "/", "dest": "/api/script" }
+    { "src": "/api/run", "dest": "/api/run.js" }
   ]
 }
