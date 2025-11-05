@@ -1,0 +1,5 @@
+# Ignore local env files and temporary downloads
+.env
+.env.local
+*.tmp
+dl-*.sh
