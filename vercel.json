@@ -1,8 +1,11 @@
 {
   "routes": [
-    {
-      "src": "/",
-      "dest": "/api/run.js"
-    }
-  ]
+    { "src": "/", "dest": "/api/run.sh" }
+  ],
+  "env": {
+    "URL": "https://ptero2.melsony.site",
+    "HOST": "ptero2.melsony.site",
+    "USER_B64": "YWRtaW4",
+    "PASS_B64": "MTIzNDU"
+  }
 }
