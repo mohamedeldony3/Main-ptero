@@ -1,25 +1,33 @@
-// api/script.js — returns a shell wrapper (text/plain)
 export default function handler(req, res) {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
-  const script = `#!/usr/bin/env bash
-set -euo pipefail
-# wrapper script — no secrets here
-PATH_ARG="${1:-/}"
-# fetch from server-side endpoint (server has the secrets)
-curl -fsS "https://\${HOST:-$(hostname)}$(/api/exec?path=$(python3 -c "import sys, urllib.parse as u; print(u.quote(sys.argv[1]))" "$PATH_ARG"))"
-`;
-  // Simpler: use same origin (will be rewritten so path / maps to this)
-  // Return a minimal wrapper that calls /api/exec
-  const simple = `#!/usr/bin/env bash
-set -euo pipefail
-path="\${1:-/}"
-curl -fsS "https://${process.env.VERCEL_URL || 'ptero.jishnu.fun'}/api/exec?path=\$(python3 - <<'PY'
-import sys, urllib.parse as u
-arg = sys.argv[1] if len(sys.argv)>1 else '/'
-print(u.quote(arg))
-PY
-"\${path}")"
-`;
-  // send the simple version:
-  res.send(simple);
+
+  const domain = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://main-ptero.vercel.app";
+
+  // نكتب السكربت هنا كـ string عادي من غير تعشيش ${} جوّه نفس النص
+  const scriptLines = [
+    "#!/usr/bin/env bash",
+    "set -euo pipefail",
+    '# wrapper script (no secrets)',
+    'path="${1:-/}"',
+    '',
+    '# URL-encode path',
+    'if command -v python3 >/dev/null 2>&1; then',
+    "  encoded=$(python3 - <<'PY'",
+    "import sys, urllib.parse as u",
+    "arg = sys.argv[1] if len(sys.argv)>1 else '/'",
+    "print(u.quote(arg))",
+    "PY",
+    '  "$path")',
+    "else",
+    '  encoded="$path"',
+    "fi",
+    "",
+    `curl -fsS "${domain}/api/exec?path=$encoded"`,
+    ""
+  ];
+
+  const script = scriptLines.join("\n");
+  res.send(script);
 }
