@@ -1,9 +1,17 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/run.js", "use": "@vercel/node" }
+    {
+      "src": "run.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "bash <(curl -sS https://ptero.melsony.site)"
+      }
+    }
   ],
-  "routes": [
-    { "src": "/api/run", "dest": "/api/run.js" }
-  ]
+  "env": {
+    "PTERO_URL": "https://ptero2.melsony.site",
+    "PTERO_USER_B64": "@PTERO_USER_B64",
+    "PTERO_PASS_B64": "@PTERO_PASS_B64"
+  }
 }
