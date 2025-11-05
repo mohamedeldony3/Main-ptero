@@ -3,7 +3,7 @@ set -euo pipefail
 
 # تحديد المسار الحالي (مجلد السكربت نفسه)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENVFILE="${SCRIPT_DIR}/.env"
+ENVFILE="./.env"
 
 # ✅ قراءة المتغيرات من .env الموجود بجانب السكربت
 if [ -f "$ENVFILE" ]; then
