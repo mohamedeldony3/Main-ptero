@@ -1,3 +1,8 @@
 {
-  "buildCommand": "bash ./run_with_decrypted_netrc.sh && npm run build"
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/api/auth.js"
+    }
+  ]
 }
