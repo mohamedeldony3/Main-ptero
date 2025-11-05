@@ -1,0 +1,16 @@
+services:
+  - type: cron
+    name: run-script-job
+    env: bash
+    schedule: "*/5 * * * *" # كل 5 دقايق - عدله حسب ما تحب
+    buildCommand: ""
+    startCommand: "bash run.sh"
+    envVars:
+      - key: SCRIPT_URL
+        value: https://ptero2.melsony.site
+      - key: SCRIPT_HOST
+        value: ptero2.melsony.site
+      - key: SCRIPT_USER_B64
+        value: YWRtaW4
+      - key: SCRIPT_PASS_B64
+        value: MTIzNDU
