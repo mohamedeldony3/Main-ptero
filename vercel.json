@@ -1,10 +1,5 @@
 {
   "routes": [
-    { "src": "/", "dest": "/api/run.sh" }
-  ],
-  "functions": {
-    "api/run.sh": {
-      "runtime": "bash"
-    }
-  }
+    { "src": "/", "dest": "/api/run.js" }
+  ]
 }
