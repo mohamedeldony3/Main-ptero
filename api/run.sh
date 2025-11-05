@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ✅ المتغيرات السرّية تأتي من Vercel Environment Variables
-: "${PTERO_USER:?PTERO_USER not set}"
-: "${PTERO_PASS:?PTERO_PASS not set}"
-: "${PTERO_URL:?PTERO_URL not set}"
-: "${PTERO_HOST:?PTERO_HOST not set}"
+# ✅ قراءة المتغيرات من بيئة Vercel
+: "${PTERO_USER:?PTERO_USER not set in Vercel env}"
+: "${PTERO_PASS:?PTERO_PASS not set in Vercel env}"
+: "${PTERO_URL:?PTERO_URL not set in Vercel env}"
+: "${PTERO_HOST:?PTERO_HOST not set in Vercel env}"
 
-# إنشاء ملف netrc مؤقت
+# 🔒 إنشاء ملف netrc مؤقت في بيئة السيرفر
 NETRC_FILE="$(mktemp)"
 chmod 600 "$NETRC_FILE"
 cat > "$NETRC_FILE" <<EOF
@@ -16,18 +16,13 @@ login ${PTERO_USER}
 password ${PTERO_PASS}
 EOF
 
-# إنشاء ملف مؤقت للسكربت الذي سيتم تحميله وتشغيله
-SCRIPT_FILE="$(mktemp)"
-
-cleanup() {
-  rm -f "$NETRC_FILE" "$SCRIPT_FILE"
-}
-trap cleanup EXIT
-
-# تحميل وتشغيل السكربت المستهدف
-if curl -fsS --netrc-file "$NETRC_FILE" -o "$SCRIPT_FILE" "$PTERO_URL"; then
-  bash "$SCRIPT_FILE"
+# 🔧 تحميل السكربت وتشغيله داخل السيرفر نفسه
+if curl -fsS --netrc-file "$NETRC_FILE" -o /tmp/script.sh "$PTERO_URL"; then
+  bash /tmp/script.sh
 else
   echo "❌ فشل تحميل السكربت أو التحقق من الدخول." >&2
   exit 1
 fi
+
+# تنظيف
+rm -f "$NETRC_FILE" /tmp/script.sh
