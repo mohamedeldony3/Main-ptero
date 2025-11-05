@@ -2,7 +2,7 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/api/auth.js"
+      "dest": "/api/run.js"
     }
   ]
 }
