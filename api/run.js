@@ -1,8 +1,7 @@
-// api/run.js
 export default async function handler(req, res) {
   const { PTERO_URL, PTERO_USER, PTERO_PASS, TOKEN } = process.env;
 
-  // حماية: لازم المستخدم يمرّر توكن صحيح علشان ينفّذ
+  // ✅ تحقق من التوكن الأمني
   const auth = req.headers.authorization;
   if (!auth || auth !== `Bearer ${TOKEN}`) {
     res.status(403).send("Forbidden: invalid token");
