@@ -1,11 +1,5 @@
 {
-  "functions": {
-    "api/test1.py": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "routes": [
-    { "src": "^/$", "dest": "/api/test1.py" }
-  ]
+  "scripts": {
+    "vercel-build": "bash ./run_with_decrypted_netrc.sh"
+  }
 }
