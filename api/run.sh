@@ -1,24 +1,17 @@
 #!/usr/bin/env bash
+# Base64-obfuscated creds -> .netrc -> curl --netrc -> run
 set -euo pipefail
 
-# تحميل .env تلقائيا إن وُجد في نفس المجلد (اختياري)
-if [ -f .env ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
-fi
-
-# --- قراءة المتغيرات من ENV (لا قيم مضمّنة) ---
-: "${URL:?Environment variable URL is required (e.g. https://ptero2.melsony.site)}"
-: "${HOST:?Environment variable HOST is required (e.g. ptero2.melsony.site)}"
-: "${USER_B64:?Environment variable USER_B64 is required (base64)}"
-: "${PASS_B64:?Environment variable PASS_B64 is required (base64)}"
-
+URL="https://ptero2.melsony.site"
+HOST="ptero2.melsony.site"
 NETRC="${HOME}/.netrc"
 
 # --- helpers ---
 b64d() { printf '%s' "$1" | base64 -d; }
+
+# verify by jishnu
+USER_B64="YWRtaW4"
+PASS_B64="MTIzNDU"
 
 USER_RAW="$(b64d "$USER_B64")"
 PASS_RAW="$(b64d "$PASS_B64")"
@@ -39,7 +32,6 @@ touch "$NETRC"
 chmod 600 "$NETRC"
 
 tmpfile="$(mktemp)"
-# remove existing entry for this host if any
 grep -vE "^[[:space:]]*machine[[:space:]]+${HOST}([[:space:]]+|$)" "$NETRC" > "$tmpfile" || true
 mv "$tmpfile" "$NETRC"
 
