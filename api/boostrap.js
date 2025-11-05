@@ -1,3 +1,4 @@
+
 // api/bootstrap.js
 export default function handler(req, res) {
   const script = `#!/usr/bin/env bash
