@@ -1,0 +1,14 @@
+{
+  "name": "remote-script-runner",
+  "version": "1.0.0",
+  "description": "Node.js script that fetches and runs a remote shell script using credentials from environment variables",
+  "main": "run.js",
+  "type": "module",
+  "scripts": {
+    "start": "node run.js"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
