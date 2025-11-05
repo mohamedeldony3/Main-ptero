@@ -1,12 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bash ./run_with_decrypted_netrc.sh && npm run build",
-  "devCommand": "npm run dev",
-  "framework": "nextjs",
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "ignoreCommand": "echo 'Skipping unnecessary files...'"
+  "buildCommand": "bash ./run_with_decrypted_netrc.sh && npm run build"
 }
