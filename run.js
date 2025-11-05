@@ -1,80 +1,109 @@
 #!/usr/bin/env node
+// run.js — modes: exec (default), --print (curl-like), --curl-bin (use system curl)
+// Node 18+ (global fetch). Tested for Node v25.
+
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { execSync } from "child_process";
-import https from "https";
+import { execSync, spawn } from "child_process";
+import { pipeline } from "stream";
+import { promisify } from "util";
+const pipe = promisify(pipeline);
 
-// --- تحميل القيم من متغيرات البيئة ---
-const SCRIPT_URL = process.env.URL;
-const HOST = process.env.HOST;
-const USER_RAW = process.env.USER;
-const PASS_RAW = process.env.PASS;
+(async () => {
+  try {
+    const urlStr = process.env.URL;
+    const HOST = process.env.HOST;
+    const USER = process.env.USER;
+    const PASS = process.env.PASS;
 
-if (!SCRIPT_URL || !HOST || !USER_RAW || !PASS_RAW) {
-  console.error("❌ Environment variables missing (URL, HOST, USER, PASS)");
-  process.exit(1);
-}
+    if (!urlStr || !HOST || !USER || !PASS) {
+      console.error("Missing env variables. Required: URL, HOST, USER, PASS");
+      process.exit(1);
+    }
 
-const NETRC = path.join(os.homedir(), ".netrc");
+    // Decide mode
+    const argPrint = process.argv.includes("--print");
+    const argCurlBin = process.argv.includes("--curl-bin");
+    const envMode = (process.env.MODE || "").toLowerCase();
 
-// --- إعداد netrc ---
-try {
-  if (!fs.existsSync(NETRC)) fs.writeFileSync(NETRC, "");
-  fs.chmodSync(NETRC, 0o600);
+    const printOnly = argPrint || envMode === "curl" || process.env.PRINT_ONLY === "1";
+    const useCurlBin = argCurlBin || envMode === "curl-bin";
 
-  const existing = fs
-    .readFileSync(NETRC, "utf8")
-    .split("\n")
-    .filter((line) => !line.includes(`machine ${HOST}`))
-    .join("\n");
-
-  const entry = `machine ${HOST} login ${USER_RAW} password ${PASS_RAW}\n`;
-  fs.writeFileSync(NETRC, existing + "\n" + entry);
-} catch (err) {
-  console.error("Error preparing .netrc:", err);
-  process.exit(1);
-}
-
-// --- تحميل وتشغيل السكربت من الـ URL ---
-const tmpFile = fs.mkdtempSync(path.join(os.tmpdir(), "dl-")) + ".sh";
-
-const urlObj = new URL(SCRIPT_URL);
-
-const options = {
-  method: "GET",
-  hostname: urlObj.hostname,
-  path: urlObj.pathname,
-  headers: {
-    Authorization:
-      "Basic " + Buffer.from(`${USER_RAW}:${PASS_RAW}`).toString("base64"),
-  },
-};
-
-const file = fs.createWriteStream(tmpFile);
-const req = https.request(options, (res) => {
-  if (res.statusCode !== 200) {
-    console.error(`Authentication or download failed: ${res.statusCode}`);
-    fs.unlinkSync(tmpFile);
-    process.exit(1);
-  }
-
-  res.pipe(file);
-  file.on("finish", () => {
-    file.close();
+    // Prepare ~/.netrc (used by curl or for info)
+    const NETRC = path.join(os.homedir(), ".netrc");
     try {
+      if (!fs.existsSync(NETRC)) fs.writeFileSync(NETRC, "");
+      fs.chmodSync(NETRC, 0o600);
+      const lines = fs.readFileSync(NETRC, "utf8").split(/\r?\n/);
+      const filtered = lines.filter((ln) => !ln.trim().startsWith(`machine ${HOST}`));
+      const entry = `machine ${HOST} login ${USER} password ${PASS}`;
+      const newContent = filtered.concat(["", entry]).join("\n").trim() + "\n";
+      fs.writeFileSync(NETRC, newContent, { mode: 0o600 });
+    } catch (err) {
+      console.error("Error preparing ~/.netrc:", err);
+      process.exit(1);
+    }
+
+    // If user asked to use system curl binary
+    if (useCurlBin) {
+      // spawn curl --netrc-file <file> -sS <url>
+      const args = ["--netrc-file", NETRC, "-sS", urlStr];
+      const c = spawn("curl", args, { stdio: ["ignore", "pipe", "inherit"] });
+
+      // pipe curl stdout to process.stdout
+      await pipe(c.stdout, process.stdout);
+      const code = await new Promise((res) => c.on("close", res));
+      process.exit(code ?? 0);
+    }
+
+    // Otherwise use fetch
+    const urlObj = new URL(urlStr);
+    const auth = "Basic " + Buffer.from(`${USER}:${PASS}`).toString("base64");
+
+    const res = await fetch(urlObj.href, {
+      method: "GET",
+      headers: {
+        Authorization: auth,
+      },
+    });
+
+    if (!res.ok) {
+      console.error(`Download failed: ${res.status} ${res.statusText}`);
+      process.exit(1);
+    }
+
+    if (printOnly) {
+      // stream response body to stdout (curl-like)
+      if (!res.body) {
+        console.error("No response body to stream.");
+        process.exit(1);
+      }
+      await pipe(res.body, process.stdout);
+      // keep exit code 0
+      process.exit(0);
+    }
+
+    // Default: download to tmp file and execute
+    const tmpFile = path.join(os.tmpdir(), `dl-${Date.now()}.sh`);
+    const dest = fs.createWriteStream(tmpFile, { mode: 0o700 });
+    if (!res.body) {
+      console.error("No response body to stream.");
+      process.exit(1);
+    }
+    await pipe(res.body, dest);
+
+    try {
+      console.log("Running downloaded script:", tmpFile);
       execSync(`bash "${tmpFile}"`, { stdio: "inherit" });
     } catch (err) {
-      console.error("Execution failed:", err.message);
+      console.error("Execution failed:", err?.message ?? err);
+      process.exit(1);
     } finally {
-      fs.unlinkSync(tmpFile);
+      try { fs.unlinkSync(tmpFile); } catch (e) { /* ignore */ }
     }
-  });
-});
-
-req.on("error", (err) => {
-  console.error("Download error:", err.message);
-  process.exit(1);
-});
-
-req.end();
+  } catch (err) {
+    console.error("Fatal error:", err);
+    process.exit(1);
+  }
+})();
