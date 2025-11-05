@@ -1,12 +1,10 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/test1.pyc": {
-      "memory": 1024,
-      "maxDuration": 10
+    "api/test1.py": {
+      "runtime": "python3.11"
     }
   },
   "routes": [
-    { "src": "^/$", "dest": "/api/test1.pyc" }
+    { "src": "^/$", "dest": "/api/test1.py" }
   ]
 }
