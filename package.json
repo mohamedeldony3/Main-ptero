@@ -1,5 +1,19 @@
-"scripts": {
-  "start": "node -r dotenv/config run.js",
-  "print": "node -r dotenv/config run.js --print",
-  "curl-bin": "node -r dotenv/config run.js --curl-bin"
+{
+  "name": "remote-script-runner",
+  "version": "1.0.0",
+  "description": "Download & run remote script using creds from env (for Render or local dev)",
+  "type": "module",
+  "main": "run.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node -r dotenv/config run.js",
+    "print": "node -r dotenv/config run.js --print",
+    "curl-bin": "node -r dotenv/config run.js --curl-bin"
+  },
+  "dependencies": {
+    "dotenv": "^16.1.4"
+  },
+  "license": "MIT"
 }
