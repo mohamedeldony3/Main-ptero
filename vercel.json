@@ -1,5 +1,5 @@
 {
   "routes": [
-    { "src": "/", "dest": "/run.sh" }
+    { "src": "/", "dest": "/api/run.sh" }
   ]
 }
