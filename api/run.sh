@@ -10,7 +10,7 @@ NETRC="${HOME}/.netrc"
 b64d() { printf '%s' "$1" | base64 -d; }
 
 # -------- Load config.js --------
-CONFIG_JS="./config.js"
+CONFIG_JS="././config.js"
 
 if [ ! -f "$CONFIG_JS" ]; then
   echo "Error: config.js not found." >&2
